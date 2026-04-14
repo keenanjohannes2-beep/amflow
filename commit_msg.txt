@@ -1,1 +1,1 @@
-feat: Add modern AM logo with flowing river
+fix: Update browser tab title to AMflow
