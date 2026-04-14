@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <defs>
+    <!-- River gradient - blue to cyan -->
+    <linearGradient id="riverFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0066ff"/>
+      <stop offset="30%" style="stop-color:#00aaff"/>
+      <stop offset="60%" style="stop-color:#00ccff"/>
+      <stop offset="100%" style="stop-color:#00e5ff"/>
+    </linearGradient>
+    
+    <!-- Wave pattern for river -->
+    <linearGradient id="wave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0088ff;stop-opacity:0.3"/>
+      <stop offset="50%" style="stop-color:#00ccff;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#0088ff;stop-opacity:0.3"/>
+    </linearGradient>
+    
+    <!-- Letter gradient -->
+    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    
+    <!-- Glow effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background subtle shape -->
+  <rect x="10" y="15" width="180" height="70" rx="8" fill="#f8fafc" opacity="0"/>
+  
+  <!-- The "A" letter - bold modern sans-serif -->
+  <text x="25" y="72" font-family="'Inter', 'SF Pro Display', -apple-system, sans-serif" font-size="70" font-weight="800" fill="url(#letterGrad)">A</text>
+  
+  <!-- The "M" letter -->
+  <text x="105" y="72" font-family="'Inter', 'SF Pro Display', -apple-system, sans-serif" font-size="70" font-weight="800" fill="url(#letterGrad)">M</text>
+  
+  <!-- River flowing through letters - creates cutout effect -->
+  <g filter="url(#glow)">
+    <!-- Main river path flowing from left, through A, then M -->
+    <path d="M0 55 
+             Q25 50, 45 55 
+             T85 52 
+             Q95 55, 100 52
+             Q110 50, 120 55
+             T155 52
+             Q170 55, 200 50"
+          fill="none" 
+          stroke="url(#riverFlow)" 
+          stroke-width="12" 
+          stroke-linecap="round"
+          opacity="0.9"/>
+    
+    <!-- River flowing back (weave effect) -->
+    <path d="M0 68 
+             Q30 72, 50 68
+             T90 72
+             Q105 68, 115 72
+             Q130 75, 145 72
+             T175 68
+             Q190 65, 200 68"
+          fill="none" 
+          stroke="url(#wave1)" 
+          stroke-width="6"
+          stroke-linecap="round"
+          opacity="0.7"/>
+    
+    <!-- Small accent waves -->
+    <path d="M20 80 Q35 77, 50 80 T80 78"
+          fill="none"
+          stroke="#00aaff"
+          stroke-width="3"
+          stroke-linecap="round"
+          opacity="0.4"/>
+          
+    <path d="M130 78 Q145 75, 160 78 T185 76"
+          fill="none"
+          stroke="#00aaff"
+          stroke-width="3"
+          stroke-linecap="round"
+          opacity="0.4"/>
+  </g>
+  
+  <!-- Modern accent dot -->
+  <circle cx="185" cy="28" r="6" fill="#00ccff" opacity="0.8"/>
+  <circle cx="185" cy="28" r="3" fill="#ffffff" opacity="0.9"/>
+</svg>
