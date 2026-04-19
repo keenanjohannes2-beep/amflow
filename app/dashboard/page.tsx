@@ -261,55 +261,75 @@ export default function DashboardPage() {
           {scorecards.length > 0 && (
             <div style={card}>
               <div style={{ padding: '13px 16px 10px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>Client Health Score Distribution (Last Week)</span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Client Score Breakdown (Last Week)</span>
               </div>
-              <div style={{ padding: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                {(() => {
-                  const pieData = [
-                    { label: 'Green (4-5)', count: scorecards.filter(s => {
-                      const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
-                      return avg >= 4
-                    }).length, color: 'var(--accent)' },
-                    { label: 'Amber (3-3.9)', count: scorecards.filter(s => {
-                      const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
-                      return avg >= 3 && avg < 4
-                    }).length, color: '#D4930A' },
-                    { label: 'At Risk (<3)', count: scorecards.filter(s => {
-                      const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
-                      return avg < 3
-                    }).length, color: 'var(--danger)' },
-                  ]
-                  const total = pieData.reduce((sum, d) => sum + d.count, 0) || 1
-                  return (
-                    <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <div style={{ width: 120, height: 120, borderRadius: '50%', position: 'relative', background: 'conic-gradient(var(--danger) 0deg ' + (pieData[2].count / total * 360) + 'deg, #D4930A ' + (pieData[2].count / total * 360) + 'deg ' + ((pieData[2].count + pieData[1].count) / total * 360) + 'deg, var(--accent) ' + ((pieData[2].count + pieData[1].count) / total * 360) + 'deg 360deg)', flexShrink: 0 }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {pieData.map(d => (
-                            <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 10, height: 10, borderRadius: 2, background: d.color }} />
-                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{d.label}: {d.count}</span>
-                            </div>
-                          ))}
+              <div style={{ display: 'flex', gap: 20, padding: 16, overflowX: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 180 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Score Distribution</div>
+                  {['satisfaction', 'communication', 'payment_reliability', 'workload_balance'].map(key => {
+                    const labelMap: any = { satisfaction: 'Satisfaction', communication: 'Communication', payment_reliability: 'Payment', workload_balance: 'Workload' }
+                    const avg = scorecards.reduce((sum, s) => sum + (s[key] || 0), 0) / scorecards.length
+                    const color = avg >= 4 ? 'var(--accent)' : avg >= 3 ? '#D4930A' : 'var(--danger)'
+                    const greenCount = scorecards.filter(s => s[key] >= 4).length
+                    const amberCount = scorecards.filter(s => s[key] >= 3 && s[key] < 4).length
+                    const redCount = scorecards.filter(s => s[key] < 3).length
+                    const total = scorecards.length || 1
+                    return (
+                      <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{labelMap[key]}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color }}>{avg.toFixed(1)}</span>
+                        </div>
+                        <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ width: `${(greenCount/total)*100}%`, background: 'var(--accent)' }} />
+                          <div style={{ width: `${(amberCount/total)*100}%`, background: '#D4930A' }} />
+                          <div style={{ width: `${(redCount/total)*100}%`, background: 'var(--danger)' }} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, fontSize: 9, color: 'var(--text-muted)' }}>
+                          <span style={{ color: 'var(--accent)' }}>{greenCount} green</span>
+                          <span style={{ color: '#D4930A' }}>{amberCount} amber</span>
+                          <span style={{ color: 'var(--danger)' }}>{redCount} at risk</span>
                         </div>
                       </div>
-                      <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Client Breakdown</div>
-                        {scorecards.map(s => {
-                          const client = clients.find(c => c.id === s.client_id)
-                          const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
-                          const color = avg >= 4 ? 'var(--accent)' : avg >= 3 ? '#D4930A' : 'var(--danger)'
-                          return (
-                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', background: 'var(--bg-app)', borderRadius: 6 }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>{client?.name || 'Unknown'}</span>
-                              <span style={{ fontSize: 12, fontWeight: 500, color }}>{avg.toFixed(1)}</span>
-                            </div>
-                          )
-                        })}
+                    )
+                  })}
+                </div>
+                <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: 20, flex: 1, minWidth: 250 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Client Scores & Weekly Avg</div>
+                  {clients.filter(c => scorecards.some(s => s.client_id === c.id)).map(client => {
+                    const s = scorecards.find(sc => sc.client_id === client.id)
+                    if (!s) return null
+                    const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
+                    const getScoreColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
+                    return (
+                      <div key={s.id} style={{ marginBottom: 12, padding: 10, background: 'var(--bg-app)', borderRadius: 8 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>{client.name}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Sat</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.satisfaction) }}>{s.satisfaction}</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Comms</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.communication) }}>{s.communication}</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Pay</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.payment_reliability) }}>{s.payment_reliability}</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Wkld</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.workload_balance) }}>{s.workload_balance}</div>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 6 }}>
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Weekly Avg</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: getScoreColor(avg) }}>{avg.toFixed(1)}</span>
+                        </div>
                       </div>
-                    </>
-                  )
-                })()}
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
