@@ -31,6 +31,7 @@ export default function LoginPage() {
           </div>
         </div>
 
+        <p style={{ fontSize: 13, color: '#666', fontStyle: 'italic', marginBottom: 20 }}>Improving Client Health & Operational Efficiency Using Data</p>
         <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Welcome back</h1>
         <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Sign in to your account</p>
 
