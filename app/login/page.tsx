@@ -29,6 +29,7 @@ export default function LoginPage() {
           <div style={{ width: 64, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <img src="/logo.svg" alt="AMflow" style={{ width: 64, height: 32, objectFit: 'contain' }} />
           </div>
+          <span style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>Account Management Toolkit</span>
         </div>
 
         <p style={{ fontSize: 13, color: '#666', fontStyle: 'italic', marginBottom: 20 }}>Improving Client Health & Operational Efficiency Using Data</p>
