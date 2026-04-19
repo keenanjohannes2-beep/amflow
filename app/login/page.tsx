@@ -25,11 +25,10 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f8' }}>
       <div style={{ background: 'white', border: '0.5px solid #e5e5e5', borderRadius: 12, padding: '40px', width: '100%', maxWidth: 380 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z"/></svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+          <div style={{ width: 64, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img src="/logo.svg" alt="AMflow" style={{ width: 64, height: 32, objectFit: 'contain' }} />
           </div>
-          <span style={{ fontWeight: 500, fontSize: 15 }}>AMflow</span>
         </div>
 
         <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Welcome back</h1>
