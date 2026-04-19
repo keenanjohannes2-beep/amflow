@@ -41,6 +41,29 @@ export default function DashboardPage() {
     return score !== null && score < 3
   })
 
+  const getHealthScoreTrend = () => {
+    if (scorecards.length === 0) return null
+    const weeks = []
+    const now = new Date()
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i * 7)
+      const weekStart = d
+      const weekScores = scorecards.filter(sc => {
+        if (!sc.created_at) return false
+        const scDate = new Date(sc.created_at)
+        return scDate >= weekStart
+      }).map(sc => (sc.satisfaction + sc.communication + sc.payment_reliability + sc.workload_balance) / 4)
+      weeks.push(weekScores.length > 0 ? weekScores.reduce((a, b) => a + b, 0) / weekScores.length : null)
+    }
+    const validWeeks = weeks.filter(w => w !== null)
+    if (validWeeks.length === 0) return null
+    const avg = validWeeks.reduce((a, b) => a + b, 0) / validWeeks.length
+    const trend = weeks[7] !== null && weeks[0] !== null ? weeks[7] - weeks[0] : 0
+    return { weeks, avg, trend }
+  }
+  const healthTrend = getHealthScoreTrend()
+
   const getRevenueTrend = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
     const currentMonth = new Date().getMonth()
@@ -235,6 +258,44 @@ export default function DashboardPage() {
               )
             })}
           </div>
+
+          {healthTrend && (
+            <div style={card}>
+              <div style={{ padding: '13px 16px 10px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Health Score Trend (8 weeks)</span>
+                <span style={{ fontSize: 11, color: healthTrend.trend >= 0 ? 'var(--accent)' : 'var(--danger)' }}>
+                  {healthTrend.trend >= 0 ? '+' : ''}{healthTrend.trend.toFixed(1)} change
+                </span>
+              </div>
+              <div style={{ padding: '16px 16px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
+                  {healthTrend.weeks.map((w, i) => {
+                    const h = w ? w * 16 : 0
+                    const isLast = i === 7
+                    return (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <div style={{ 
+                          width: '100%', 
+                          height: h, 
+                          background: w ? (w >= 4 ? 'var(--accent)' : w >= 3 ? '#D4930A' : 'var(--danger)') : 'var(--bg-app)',
+                          borderRadius: 3,
+                          opacity: isLast ? 1 : 0.5,
+                          transition: 'height 0.2s'
+                        }} 
+                        />
+                        {w && <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{w.toFixed(1)}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: 'var(--text-muted)' }}>
+                  <span>8w ago</span>
+                  <span>Avg: {healthTrend.avg.toFixed(1)}</span>
+                  <span>Now</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
