@@ -35,6 +35,11 @@ export default function DashboardPage() {
   const openTasks = tasks.filter(t => t.status !== 'Done')
   const overdueTasks = tasks.filter(t => t.status !== 'Done' && t.deadline && new Date(t.deadline) < new Date())
   const completedTasks = tasks.filter(t => t.status === 'Done')
+  const getClientScore = (clientId: string) => {
+    const s = scorecards.find(sc => sc.client_id === clientId)
+    if (!s) return null
+    return (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
+  }
   const taskCompletionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 100
   const atRiskClients = activeClients.filter(c => {
     const score = getClientScore(c.id)
@@ -98,12 +103,6 @@ export default function DashboardPage() {
     if (score >= 4) return { label: 'Green', bg: 'var(--accent-light)', color: 'var(--accent-text)' }
     if (score >= 3) return { label: 'Amber', bg: 'var(--warning-light)', color: 'var(--warning)' }
     return { label: 'At risk', bg: 'var(--danger-light)', color: 'var(--danger)' }
-  }
-
-  const getClientScore = (clientId: string) => {
-    const s = scorecards.find(sc => sc.client_id === clientId)
-    if (!s) return null
-    return (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
   }
 
   if (loading) return (
