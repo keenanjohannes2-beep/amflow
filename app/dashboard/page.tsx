@@ -140,7 +140,7 @@ export default function DashboardPage() {
                 chart: revenueTrend.trend,
                 chartColor: revenueTrend.trendDir === 'up' ? 'var(--accent)' : 'var(--danger)'
               },
-              { label: 'Task completion', value: `${taskCompletionRate}%`, sub: `${completedTasks.length}/${tasks.length} done`, warn: taskCompletionRate < 50 },
+              { label: 'Tasks Completion', value: `${taskCompletionRate}%`, sub: `${completedTasks.length}/${tasks.length} done`, warn: taskCompletionRate < 50 },
               { label: 'Avg health score', value: scorecards.length ? (scorecards.reduce((s, sc) => s + (sc.satisfaction + sc.communication + sc.payment_reliability + sc.workload_balance) / 4, 0) / scorecards.length).toFixed(1) : '—', sub: 'across all clients', warn: false },
             ].map(m => (
               <div key={m.label} style={{ ...card, padding: '14px 16px' }}>
