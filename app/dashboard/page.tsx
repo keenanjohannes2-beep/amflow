@@ -257,10 +257,64 @@ export default function DashboardPage() {
               )
             })}
           </div>
+
+          {scorecards.length > 0 && (
+            <div style={card}>
+              <div style={{ padding: '13px 16px 10px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Health Score Breakdown</span>
+              </div>
+              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Overall Score Distribution</div>
+                    {['satisfaction', 'communication', 'payment_reliability', 'workload_balance'].map(key => {
+                      const labelMap: any = { satisfaction: 'Satisfaction', communication: 'Communication', payment_reliability: 'Payment', workload_balance: 'Workload' }
+                      const avg = scorecards.reduce((sum, s) => sum + (s[key] || 0), 0) / scorecards.length
+                      const lowCount = scorecards.filter(s => s[key] < 3).length
+                      const lowPercent = scorecards.length > 0 ? lowCount / scorecards.length : 0
+                      const gradientDeg = lowPercent < 0.5 ? 180 : Math.min(360, lowPercent * 360)
+                      const getColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
+                      return (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                          <div style={{ width: 60, height: 60, borderRadius: '50%', position: 'relative', background: `conic-gradient(var(--danger) 0deg ${gradientDeg}deg, #D4930A 0deg 180deg, var(--accent) 180deg 360deg)`, flexShrink: 0 }} />
+                          <div>
+                            <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>{labelMap[key]}</div>
+                            <div style={{ fontSize: 18, fontWeight: 600, color: getColor(avg) }}>{avg.toFixed(1)}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {clients.filter(c => scorecards.some(s => s.client_id === c.id)).map(client => {
+                    const s = scorecards.find(sc => sc.client_id === client.id)
+                    if (!s) return null
+                    const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
+                    const getColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
+                    return (
+                      <div key={s.id} style={{ flex: 1, minWidth: 280, padding: 12, background: 'var(--bg-app)', borderRadius: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>{client.name}</div>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `conic-gradient(var(--danger) 0deg ${s.payment_reliability < 3 ? 90 : 180}deg, #D4930A 0deg 180deg, var(--accent) 180deg 360deg)`, flexShrink: 0 }} />
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px 16px' }}>
+                            <div><span style={{ fontSize: 10 }}>Sat</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.satisfaction) }}>{s.satisfaction}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Comms</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.communication) }}>{s.communication}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Pay</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.payment_reliability) }}>{s.payment_reliability}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Wkld</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.workload_balance) }}>{s.workload_balance}</div></div>
+                          </div>
+                          <div style={{ marginLeft: 'auto', textAlign: 'center', padding: '8px 12px', background: 'var(--bg-card)', borderRadius: 8 }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Avg</div>
+                            <div style={{ fontSize: 18, fontWeight: 600, color: getColor(avg) }}>{avg.toFixed(1)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
   )
 }
-
-          
