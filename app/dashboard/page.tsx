@@ -35,6 +35,32 @@ export default function DashboardPage() {
   const openTasks = tasks.filter(t => t.status !== 'Done')
   const overdueTasks = tasks.filter(t => t.status !== 'Done' && t.deadline && new Date(t.deadline) < new Date())
 
+  const getRevenueTrend = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    const currentMonth = new Date().getMonth()
+    const trend: number[] = []
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthIdx = (currentMonth - i + 12) % 12
+      const monthClients = clients.filter(c => {
+        if (!c.start_date) return false
+        const start = new Date(c.start_date)
+        return start.getMonth() === monthIdx && c.status === 'Active'
+      })
+      const revenue = monthClients.reduce((sum, c) => sum + (c.monthly_retainer || 0), 0)
+      trend.push(revenue || (monthIdx === currentMonth ? monthlyRevenue : 0))
+    }
+    
+    const maxRev = Math.max(...trend, 1)
+    const avgRev = trend.reduce((a, b) => a + b, 0) / trend.length
+    const trendDir = trend[5] >= trend[0] ? 'up' : 'down'
+    const pctChange = trend[0] > 0 ? ((trend[5] - trend[0]) / trend[0] * 100).toFixed(0) : 0
+    
+    return { months, trend, maxRev, avgRev, trendDir, pctChange }
+  }
+  
+  const revenueTrend = getRevenueTrend()
+
   const getInitials = (name: string) => name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   const avatarColors = ['#D6F0E7', '#D6E8FA', '#FDF3D6', '#FBEAE8', '#EDE9FA']
   const textColors = ['#0A5C43', '#1A4A7A', '#7A5200', '#8B2A1E', '#4A3080']
@@ -78,7 +104,14 @@ export default function DashboardPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12, marginBottom: 20 }}>
             {[
               { label: 'Active clients', value: activeClients.length, sub: `${clients.length} total`, warn: false },
-              { label: 'Monthly revenue', value: `R${monthlyRevenue.toLocaleString()}`, sub: 'active retainers', warn: false },
+              { 
+                label: 'Monthly revenue', 
+                value: `R${monthlyRevenue.toLocaleString()}`, 
+                sub: revenueTrend.trendDir === 'up' ? `+${revenueTrend.pctChange}% vs 6mo ago` : `${revenueTrend.pctChange}% vs 6mo ago`,
+                warn: revenueTrend.trendDir === 'down',
+                chart: revenueTrend.trend,
+                chartColor: revenueTrend.trendDir === 'up' ? 'var(--accent)' : 'var(--danger)'
+              },
               { label: 'Open tasks', value: openTasks.length, sub: `${overdueTasks.length} overdue`, warn: overdueTasks.length > 0 },
               { label: 'Avg health score', value: scorecards.length ? (scorecards.reduce((s, sc) => s + (sc.satisfaction + sc.communication + sc.payment_reliability + sc.workload_balance) / 4, 0) / scorecards.length).toFixed(1) : '—', sub: 'across all clients', warn: false },
             ].map(m => (
@@ -86,6 +119,24 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{m.label}</div>
                 <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1 }}>{m.value}</div>
                 <div style={{ fontSize: 11, marginTop: 5, color: m.warn ? 'var(--danger)' : 'var(--accent)' }}>{m.sub}</div>
+                {m.chart && (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 32, marginTop: 8 }}>
+                    {(m.chart as number[]).map((v, i) => {
+                      const h = m.chart ? (v / Math.max(...m.chart as number[], 1)) * 28 + 4 : 4
+                      return (
+                        <div key={i} style={{ 
+                          flex: 1, 
+                          height: h, 
+                          background: m.chartColor, 
+                          borderRadius: 2,
+                          opacity: i === 5 ? 1 : 0.4,
+                          transition: 'height 0.2s'
+                        }} 
+                        />
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
