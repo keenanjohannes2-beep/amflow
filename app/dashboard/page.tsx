@@ -261,73 +261,55 @@ export default function DashboardPage() {
           {scorecards.length > 0 && (
             <div style={card}>
               <div style={{ padding: '13px 16px 10px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>Client Score Breakdown (Last Week)</span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>Health Score Breakdown</span>
               </div>
-              <div style={{ display: 'flex', gap: 20, padding: 16, overflowX: 'auto' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 180 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Score Distribution</div>
-                  {['satisfaction', 'communication', 'payment_reliability', 'workload_balance'].map(key => {
-                    const labelMap: any = { satisfaction: 'Satisfaction', communication: 'Communication', payment_reliability: 'Payment', workload_balance: 'Workload' }
-                    const avg = scorecards.reduce((sum, s) => sum + (s[key] || 0), 0) / scorecards.length
-                    const color = avg >= 4 ? 'var(--accent)' : avg >= 3 ? '#D4930A' : 'var(--danger)'
-                    const greenCount = scorecards.filter(s => s[key] >= 4).length
-                    const amberCount = scorecards.filter(s => s[key] >= 3 && s[key] < 4).length
-                    const redCount = scorecards.filter(s => s[key] < 3).length
-                    const total = scorecards.length || 1
+              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Overall Score Distribution</div>
+                    {['satisfaction', 'communication', 'payment_reliability', 'workload_balance'].map(key => {
+                      const labelMap: any = { satisfaction: 'Satisfaction', communication: 'Communication', payment_reliability: 'Payment', workload_balance: 'Workload' }
+                      const avg = scorecards.reduce((sum, s) => sum + (s[key] || 0), 0) / scorecards.length
+                      const getColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
+                      return (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                          <div style={{ width: 60, height: 60, borderRadius: '50%', position: 'relative', background: 'conic-gradient(var(--danger) 0deg ' + (Math.max(0, (satisfaction: any) => { const sc = scorecards.filter(x => x[key] < 3).length / scorecards.length; return sc < 0.5 ? 180 : sc * 360 }()) + 'deg, #D4930A 0deg 180deg, var(--accent) 180deg 360deg)', flexShrink: 0 }} />
+                          <div>
+                            <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>{labelMap[key]}</div>
+                            <div style={{ fontSize: 18, fontWeight: 600, color: getColor(avg) }}>{avg.toFixed(1)}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {clients.filter(c => scorecards.some(s => s.client_id === c.id)).map(client => {
+                    const s = scorecards.find(sc => sc.client_id === client.id)
+                    if (!s) return null
+                    const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
+                    const getColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
                     return (
-                      <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{labelMap[key]}</span>
-                          <span style={{ fontSize: 11, fontWeight: 600, color }}>{avg.toFixed(1)}</span>
-                        </div>
-                        <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ width: `${(greenCount/total)*100}%`, background: 'var(--accent)' }} />
-                          <div style={{ width: `${(amberCount/total)*100}%`, background: '#D4930A' }} />
-                          <div style={{ width: `${(redCount/total)*100}%`, background: 'var(--danger)' }} />
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, fontSize: 9, color: 'var(--text-muted)' }}>
-                          <span style={{ color: 'var(--accent)' }}>{greenCount} green</span>
-                          <span style={{ color: '#D4930A' }}>{amberCount} amber</span>
-                          <span style={{ color: 'var(--danger)' }}>{redCount} at risk</span>
+                      <div key={s.id} style={{ flex: 1, minWidth: 280, padding: 12, background: 'var(--bg-app)', borderRadius: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>{client.name}</div>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <div style={{ width: 60, height: 60, borderRadius: '30', background: 'conic-gradient(var(--danger) 0deg ' + ((s.payment_reliability < 3 ? (s.payment_reliability < 3 ? 1 : 0) : 0) * 90) + 'deg, #D4930A 0deg 180deg, var(--accent) 180deg 360deg)', flexShrink: 0 }} />
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px 16px' }}>
+                            <div><span style={{ fontSize: 10 }}>Sat</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.satisfaction) }}>{s.satisfaction}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Comms</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.communication) }}>{s.communication}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Pay</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.payment_reliability) }}>{s.payment_reliability}</div></div>
+                            <div><span style={{ fontSize: 10 }}>Wkld</span><div style={{ fontSize: 14, fontWeight: 600, color: getColor(s.workload_balance) }}>{s.workload_balance}</div></div>
+                          </div>
+                          <div style={{ marginLeft: 'auto', textAlign: 'center', padding: '8px 12px', background: 'var(--bg-card)', borderRadius: 8 }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Avg</div>
+                            <div style={{ fontSize: 18, fontWeight: 600, color: getColor(avg) }}>{avg.toFixed(1)}</div>
+                          </div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-                <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: 20, flex: 1, minWidth: 250 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Client Scores & Weekly Avg</div>
-                  {clients.filter(c => scorecards.some(s => s.client_id === c.id)).map(client => {
-                    const s = scorecards.find(sc => sc.client_id === client.id)
-                    if (!s) return null
-                    const avg = (s.satisfaction + s.communication + s.payment_reliability + s.workload_balance) / 4
-                    const getScoreColor = (v: number) => v >= 4 ? 'var(--accent)' : v >= 3 ? '#D4930A' : 'var(--danger)'
-                    return (
-                      <div key={s.id} style={{ marginBottom: 12, padding: 10, background: 'var(--bg-app)', borderRadius: 8 }}>
-                        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>{client.name}</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Sat</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.satisfaction) }}>{s.satisfaction}</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Comms</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.communication) }}>{s.communication}</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Pay</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.payment_reliability) }}>{s.payment_reliability}</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Wkld</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: getScoreColor(s.workload_balance) }}>{s.workload_balance}</div>
-                          </div>
-                        </div>
-                        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 6 }}>
-                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Weekly Avg</span>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: getScoreColor(avg) }}>{avg.toFixed(1)}</span>
-                        </div>
-                      </div>
-                    )
+              </div>
+            </div>
+          )}
                   })}
                 </div>
               </div>
