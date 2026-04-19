@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AMflow - Account Manager Toolkit",
-  description: "Account Manager Toolkit for BPO, healthcare billing, and client services. Manage clients, tasks, communications, and generate reports.",
+  title: "AMflow - Account Management Toolkit",
+  description: "Account Management Toolkit for BPO, healthcare billing, and client services. Manage clients, tasks, communications, and generate reports.",
 };
 
 export default function RootLayout({

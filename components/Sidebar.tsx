@@ -54,7 +54,7 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>AMflow</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Account Manager Toolkit</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Account Management Toolkit</div>
           </div>
         </div>
       </div>
