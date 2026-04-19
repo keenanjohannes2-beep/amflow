@@ -34,6 +34,12 @@ export default function DashboardPage() {
   const monthlyRevenue = activeClients.reduce((sum, c) => sum + (c.monthly_retainer || 0), 0)
   const openTasks = tasks.filter(t => t.status !== 'Done')
   const overdueTasks = tasks.filter(t => t.status !== 'Done' && t.deadline && new Date(t.deadline) < new Date())
+  const completedTasks = tasks.filter(t => t.status === 'Done')
+  const taskCompletionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 100
+  const atRiskClients = activeClients.filter(c => {
+    const score = getClientScore(c.id)
+    return score !== null && score < 3
+  })
 
   const getRevenueTrend = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
@@ -103,7 +109,7 @@ export default function DashboardPage() {
           {/* Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'Active clients', value: activeClients.length, sub: `${clients.length} total`, warn: false },
+              { label: 'Active clients', value: activeClients.length, sub: `${clients.length} total`, warn: false, badge: atRiskClients.length > 0 ? `${atRiskClients.length} at risk` : null, badgeWarn: atRiskClients.length > 0 },
               { 
                 label: 'Monthly revenue', 
                 value: `R${monthlyRevenue.toLocaleString()}`, 
@@ -112,10 +118,15 @@ export default function DashboardPage() {
                 chart: revenueTrend.trend,
                 chartColor: revenueTrend.trendDir === 'up' ? 'var(--accent)' : 'var(--danger)'
               },
-              { label: 'Open tasks', value: openTasks.length, sub: `${overdueTasks.length} overdue`, warn: overdueTasks.length > 0 },
+              { label: 'Task completion', value: `${taskCompletionRate}%`, sub: `${completedTasks.length}/${tasks.length} done`, warn: taskCompletionRate < 50 },
               { label: 'Avg health score', value: scorecards.length ? (scorecards.reduce((s, sc) => s + (sc.satisfaction + sc.communication + sc.payment_reliability + sc.workload_balance) / 4, 0) / scorecards.length).toFixed(1) : '—', sub: 'across all clients', warn: false },
             ].map(m => (
               <div key={m.label} style={{ ...card, padding: '14px 16px' }}>
+                {m.badge && (
+                  <span style={{ fontSize: 9, fontWeight: 500, padding: '2px 6px', borderRadius: 4, background: m.badgeWarn ? 'var(--danger-light)' : 'var(--accent-light)', color: m.badgeWarn ? 'var(--danger)' : 'var(--accent)', marginBottom: 4, display: 'inline-block' }}>
+                    {m.badge}
+                  </span>
+                )}
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{m.label}</div>
                 <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1 }}>{m.value}</div>
                 <div style={{ fontSize: 11, marginTop: 5, color: m.warn ? 'var(--danger)' : 'var(--accent)' }}>{m.sub}</div>
