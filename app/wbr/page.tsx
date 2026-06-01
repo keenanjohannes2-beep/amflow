@@ -104,6 +104,7 @@ export default function WBRPage() {
     const [
       { data: employees }, { data: attendance }, { data: scorecard },
       { data: kpiTemplates }, { data: kpiRecords }, { data: issues },
+      { data: recruitmentData },
     ] = await Promise.all([
       supabase.from('employees').select('*').eq('user_id', user.id).eq('client_id', selectedClient),
       supabase.from('attendance').select('*').eq('user_id', user.id).eq('client_id', selectedClient).gte('date', weekStart).lte('date', weekEnd),
@@ -111,6 +112,7 @@ export default function WBRPage() {
       supabase.from('kpi_templates').select('*').eq('user_id', user.id).eq('client_id', selectedClient),
       supabase.from('kpi_records').select('*').eq('user_id', user.id).eq('client_id', selectedClient).gte('date', weekStart).lte('date', weekEnd),
       supabase.from('issues').select('*').eq('user_id', user.id).eq('client_id', selectedClient).neq('status', 'Resolved'),
+      supabase.from('recruitment').select('*').eq('user_id', user.id).eq('client_id', selectedClient).eq('week_start', weekStart).maybeSingle(),
     ])
     const present = attendance?.filter(a => a.status === 'Present').length || 0
     const absent = attendance?.filter(a => a.status === 'Absent').length || 0
@@ -170,6 +172,11 @@ export default function WBRPage() {
       health_summary: healthSummary, kpi_summary: kpiSummary,
       escalations_summary: escalationsSummary,
       productivity_summary: productivitySummary || f.productivity_summary,
+      new_hires: recruitmentData?.new_hires || '',
+      onboarding_dates: recruitmentData?.onboarding_dates || '',
+      todo_list: recruitmentData?.todo_list || '',
+      recruitment_challenges: recruitmentData?.challenges || '',
+      recruitment_deliverables: recruitmentData?.deliverables || '',
       deliverables: '', key_metrics: '', wins: '',
       challenges: '', action_items: '', next_week_focus: '',
     }))

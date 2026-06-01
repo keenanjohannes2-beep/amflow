@@ -199,6 +199,20 @@ CREATE TABLE IF NOT EXISTS public.wbr (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.recruitment (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  week_start DATE,
+  new_hires TEXT,
+  onboarding_dates TEXT,
+  todo_list TEXT,
+  challenges TEXT,
+  deliverables TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- ENABLE ROW LEVEL SECURITY ON ALL TABLES
 -- ============================================
@@ -215,6 +229,7 @@ ALTER TABLE public.kpi_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kpi_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scorecards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wbr ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recruitment ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- CLIENTS POLICIES
@@ -467,6 +482,27 @@ CREATE POLICY "Users can update own wbr"
 
 CREATE POLICY "Users can delete own wbr"
   ON public.wbr FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================
+-- RECRUITMENT POLICIES
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view own recruitment" ON public.recruitment;
+DROP POLICY IF EXISTS "Users can insert own recruitment" ON public.recruitment;
+DROP POLICY IF EXISTS "Users can update own recruitment" ON public.recruitment;
+DROP POLICY IF EXISTS "Users can delete own recruitment" ON public.recruitment;
+
+CREATE POLICY "Users can view own recruitment"
+  ON public.recruitment FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own recruitment"
+  ON public.recruitment FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own recruitment"
+  ON public.recruitment FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own recruitment"
+  ON public.recruitment FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================
 -- INDEXES FOR PERFORMANCE

@@ -7,6 +7,7 @@ const nav = [
   { label: 'Dashboard', icon: '▦', href: '/dashboard' },
   { label: 'Clients', icon: '◉', href: '/clients' },
   { label: 'Weekly Reviews', icon: '▤', href: '/wbr' },
+  { label: 'Recruitment', icon: '⊕', href: '/recruitment' },
   { label: 'Tasks', icon: '✓', href: '/tasks' },
   { label: 'Communications', icon: '◈', href: '/communications' },
   { label: 'Escalations', icon: '⚠', href: '/issues' },
