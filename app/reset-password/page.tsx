@@ -10,13 +10,26 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
-      if (event !== 'PASSWORD_RECOVERY') {
-        router.push('/login')
-      }
-    })
+    const params = new URLSearchParams(window.location.search)
+    const tokenHash = params.get('token_hash')
+    const type = params.get('type')
+
+    if (!tokenHash || type !== 'recovery') {
+      router.push('/login')
+      return
+    }
+
+    supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+      .then(({ error }) => {
+        if (error) {
+          setError(error.message)
+        } else {
+          setReady(true)
+        }
+      })
   }, [router])
 
   const handleReset = async () => {
@@ -65,40 +78,55 @@ export default function ResetPasswordPage() {
           <span style={{ fontWeight: 500, fontSize: 15 }}>AMflow</span>
         </div>
 
-        <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Set new password</h1>
-        <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Enter your new password below</p>
+        {!ready && !error ? (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Verifying...</h1>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Checking your reset link...</p>
+          </>
+        ) : error ? (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Invalid link</h1>
+            <p style={{ fontSize: 13, color: '#E24B4A', marginBottom: 20 }}>{error}</p>
+            <a href="/login" style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 8, background: '#1D9E75', color: 'white', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>Back to sign in</a>
+          </>
+        ) : (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Set new password</h1>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Enter your new password below</p>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>New password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
-          />
-        </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>New password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
+              />
+            </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Confirm password</label>
-          <input
-            type="password"
-            value={confirm}
-            onChange={e => setConfirm(e.target.value)}
-            placeholder="••••••••"
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
-          />
-        </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Confirm password</label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
+              />
+            </div>
 
-        {error && <p style={{ fontSize: 12, color: '#E24B4A', marginBottom: 14 }}>{error}</p>}
+            {error && <p style={{ fontSize: 12, color: '#E24B4A', marginBottom: 14 }}>{error}</p>}
 
-        <button
-          onClick={handleReset}
-          disabled={loading || !password || !confirm}
-          style={{ width: '100%', padding: '10px', borderRadius: 8, background: password && confirm ? '#1D9E75' : '#ccc', color: 'white', border: 'none', fontSize: 14, fontWeight: 500, cursor: password && confirm ? 'pointer' : 'not-allowed' }}
-        >
-          {loading ? 'Resetting...' : 'Reset password'}
-        </button>
+            <button
+              onClick={handleReset}
+              disabled={loading || !password || !confirm}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, background: password && confirm ? '#1D9E75' : '#ccc', color: 'white', border: 'none', fontSize: 14, fontWeight: 500, cursor: password && confirm ? 'pointer' : 'not-allowed' }}
+            >
+              {loading ? 'Resetting...' : 'Reset password'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
