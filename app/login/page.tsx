@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetMode, setResetMode] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const handleLogin = async () => {
   setLoading(true)
@@ -22,6 +24,16 @@ export default function LoginPage() {
   }
 }
 
+  const handleReset = async () => {
+    if (!email) { setError('Enter your email address'); return }
+    setLoading(true); setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    })
+    if (error) { setError(error.message); setLoading(false) }
+    else { setResetSent(true); setLoading(false) }
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f8' }}>
       <div style={{ background: 'white', border: '0.5px solid #e5e5e5', borderRadius: 12, padding: '40px', width: '100%', maxWidth: 380 }}>
@@ -32,46 +44,90 @@ export default function LoginPage() {
           <span style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>Account Management Toolkit</span>
         </div>
 
-        <p style={{ fontSize: 13, color: '#666', fontStyle: 'italic', marginBottom: 20 }}>Improving Client Health & Operational Efficiency Using Data</p>
-        <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Welcome back</h1>
-        <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Sign in to your account</p>
+        {resetSent ? (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Check your email</h1>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>We sent a password reset link to <strong>{email}</strong></p>
+            <button
+              onClick={() => { setResetMode(false); setResetSent(false); setEmail(''); setError('') }}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', color: '#333', fontSize: 14, cursor: 'pointer' }}
+            >
+              Back to sign in
+            </button>
+          </>
+        ) : resetMode ? (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Reset password</h1>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Enter your email and we'll send you a reset link</p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
+              />
+            </div>
+            {error && <p style={{ fontSize: 12, color: '#E24B4A', marginBottom: 14 }}>{error}</p>}
+            <button
+              onClick={handleReset}
+              disabled={loading}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, background: '#1D9E75', color: 'white', border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            >
+              {loading ? 'Sending...' : 'Send reset link'}
+            </button>
+            <p style={{ fontSize: 12, color: '#888', textAlign: 'center', marginTop: 20 }}>
+              <a href="#" onClick={e => { e.preventDefault(); setResetMode(false); setError('') }} style={{ color: '#1D9E75', textDecoration: 'none' }}>Back to sign in</a>
+            </p>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 13, color: '#666', fontStyle: 'italic', marginBottom: 20 }}>Improving Client Health & Operational Efficiency Using Data</p>
+            <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Welcome back</h1>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 24 }}>Sign in to your account</p>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
-          />
-        </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
+              />
+            </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 5 }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
-          />
-        </div>
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                <label style={{ fontSize: 12, color: '#555' }}>Password</label>
+                <a href="#" onClick={e => { e.preventDefault(); setResetMode(true); setError('') }} style={{ fontSize: 11, color: '#1D9E75', textDecoration: 'none' }}>Forgot password?</a>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, outline: 'none' }}
+              />
+            </div>
 
-        {error && <p style={{ fontSize: 12, color: '#E24B4A', marginBottom: 14 }}>{error}</p>}
+            {error && <p style={{ fontSize: 12, color: '#E24B4A', marginBottom: 14 }}>{error}</p>}
 
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          style={{ width: '100%', padding: '10px', borderRadius: 8, background: '#1D9E75', color: 'white', border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
-        >
-          {loading ? 'Signing in...' : 'Sign in'}
-        </button>
+            <button
+              onClick={handleLogin}
+              disabled={loading}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, background: '#1D9E75', color: 'white', border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
 
-<p style={{ fontSize: 12, color: '#888', textAlign: 'center', marginTop: 20 }}>
-          No account?{' '}
-          <a href="/signup" style={{ color: '#1D9E75', textDecoration: 'none' }}>Sign up</a>
-        </p>
+            <p style={{ fontSize: 12, color: '#888', textAlign: 'center', marginTop: 20 }}>
+              No account?{' '}
+              <a href="/signup" style={{ color: '#1D9E75', textDecoration: 'none' }}>Sign up</a>
+            </p>
+          </>
+        )}
 
         <div style={{ marginTop: 28, paddingTop: 16, borderTop: '0.5px solid #e5e5e5', textAlign: 'center' }}>
           <div style={{ fontSize: 10, color: '#bbb', lineHeight: 1.6 }}>Created by Keenan Johannes</div>
