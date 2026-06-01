@@ -228,6 +228,31 @@ CREATE TABLE IF NOT EXISTS public.poc (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.wins_losses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  week_start DATE,
+  type TEXT NOT NULL CHECK (type IN ('win', 'loss')),
+  category TEXT NOT NULL CHECK (category IN ('productivity', 'utilization', 'engagement', 'other')),
+  description TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.attrition_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  week_start DATE,
+  employee_name TEXT,
+  reason TEXT,
+  type TEXT NOT NULL CHECK (type IN ('voluntary', 'involuntary', 'flagged')),
+  notes TEXT,
+  resolved BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- ENABLE ROW LEVEL SECURITY ON ALL TABLES
 -- ============================================
@@ -246,6 +271,8 @@ ALTER TABLE public.scorecards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wbr ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recruitment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.poc ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wins_losses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attrition_logs ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- CLIENTS POLICIES
@@ -542,6 +569,48 @@ CREATE POLICY "Users can delete own poc"
   ON public.poc FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================
+-- WINS/LOSSES POLICIES
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view own wins_losses" ON public.wins_losses;
+DROP POLICY IF EXISTS "Users can insert own wins_losses" ON public.wins_losses;
+DROP POLICY IF EXISTS "Users can update own wins_losses" ON public.wins_losses;
+DROP POLICY IF EXISTS "Users can delete own wins_losses" ON public.wins_losses;
+
+CREATE POLICY "Users can view own wins_losses"
+  ON public.wins_losses FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own wins_losses"
+  ON public.wins_losses FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own wins_losses"
+  ON public.wins_losses FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own wins_losses"
+  ON public.wins_losses FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================
+-- ATTRITION LOGS POLICIES
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view own attrition_logs" ON public.attrition_logs;
+DROP POLICY IF EXISTS "Users can insert own attrition_logs" ON public.attrition_logs;
+DROP POLICY IF EXISTS "Users can update own attrition_logs" ON public.attrition_logs;
+DROP POLICY IF EXISTS "Users can delete own attrition_logs" ON public.attrition_logs;
+
+CREATE POLICY "Users can view own attrition_logs"
+  ON public.attrition_logs FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own attrition_logs"
+  ON public.attrition_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own attrition_logs"
+  ON public.attrition_logs FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own attrition_logs"
+  ON public.attrition_logs FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -576,12 +645,16 @@ CREATE INDEX IF NOT EXISTS idx_recruitment_user_id ON public.recruitment(user_id
 CREATE INDEX IF NOT EXISTS idx_recruitment_client_id ON public.recruitment(client_id);
 CREATE INDEX IF NOT EXISTS idx_poc_user_id ON public.poc(user_id);
 CREATE INDEX IF NOT EXISTS idx_poc_client_id ON public.poc(client_id);
+CREATE INDEX IF NOT EXISTS idx_wins_losses_user_id ON public.wins_losses(user_id);
+CREATE INDEX IF NOT EXISTS idx_wins_losses_client_id ON public.wins_losses(client_id);
+CREATE INDEX IF NOT EXISTS idx_attrition_logs_user_id ON public.attrition_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_attrition_logs_client_id ON public.attrition_logs(client_id);
 
 -- ============================================
 -- SECURITY SUMMARY
 -- ============================================
 --
--- All 13 tables have RLS enabled
+-- All 15 tables have RLS enabled
 -- Every operation (SELECT, INSERT, UPDATE, DELETE) requires:
 --   auth.uid() = user_id
 --

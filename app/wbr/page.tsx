@@ -105,6 +105,7 @@ export default function WBRPage() {
       { data: employees }, { data: attendance }, { data: scorecard },
       { data: kpiTemplates }, { data: kpiRecords }, { data: issues },
       { data: recruitmentData }, { data: pocData },
+      { data: winsLossesData }, { data: attritionData },
     ] = await Promise.all([
       supabase.from('employees').select('*').eq('user_id', user.id).eq('client_id', selectedClient),
       supabase.from('attendance').select('*').eq('user_id', user.id).eq('client_id', selectedClient).gte('date', weekStart).lte('date', weekEnd),
@@ -114,6 +115,8 @@ export default function WBRPage() {
       supabase.from('issues').select('*').eq('user_id', user.id).eq('client_id', selectedClient).neq('status', 'Resolved'),
       supabase.from('recruitment').select('*').eq('user_id', user.id).eq('client_id', selectedClient).eq('week_start', weekStart).maybeSingle(),
       supabase.from('poc').select('*').eq('user_id', user.id).eq('client_id', selectedClient).maybeSingle(),
+      supabase.from('wins_losses').select('*').eq('user_id', user.id).eq('client_id', selectedClient).gte('week_start', weekStart).lte('week_start', weekEnd),
+      supabase.from('attrition_logs').select('*').eq('user_id', user.id).eq('client_id', selectedClient).eq('resolved', false),
     ])
     const present = attendance?.filter(a => a.status === 'Present').length || 0
     const absent = attendance?.filter(a => a.status === 'Absent').length || 0
@@ -180,6 +183,9 @@ export default function WBRPage() {
       recruitment_deliverables: recruitmentData?.deliverables || '',
       director_name: pocData?.director_name || f.director_name || '',
       csm_name: pocData?.csm_name || f.csm_name || '',
+      productivity_wins_losses: winsLossesData?.filter((w: any) => w.type === 'win' && w.category === 'productivity').map((w: any) => w.description).join('\n') || f.productivity_wins_losses || '',
+      utilization_wins_losses: winsLossesData?.filter((w: any) => w.type === 'win' && w.category === 'utilization').map((w: any) => w.description).join('\n') || f.utilization_wins_losses || '',
+      attrition_summary: attritionData?.map((a: any) => `${a.employee_name} — ${a.reason || 'no reason'}`).join('\n') || f.attrition_summary || '',
       deliverables: '', key_metrics: '', wins: '',
       challenges: '', action_items: '', next_week_focus: '',
     }))

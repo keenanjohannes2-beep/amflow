@@ -16,6 +16,7 @@ const nav = [
   { label: 'Attendance', icon: '◷', href: '/attendance' },
   { label: 'Performance KPIs', icon: '◈', href: '/kpis' },
   { label: 'Exports', icon: '↓', href: '/exports' },
+  { label: 'Attrition', icon: '▲', href: '/attrition' },
 ]
 
 export default function Sidebar({ userEmail }: { userEmail: string }) {
