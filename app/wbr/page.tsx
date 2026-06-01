@@ -44,6 +44,7 @@ export default function WBRPage() {
   const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState('')
   const [exportingId, setExportingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'view' | 'export'>('view')
   const [selectedWBR, setSelectedWBR] = useState<any>(null)
 
@@ -133,6 +134,7 @@ export default function WBRPage() {
       healthSummary = `Overall: ${avg}/5\nSatisfaction: ${sc.satisfaction}/5 | Communication: ${sc.communication}/5 | Payment Reliability: ${sc.payment_reliability}/5 | Workload Balance: ${sc.workload_balance}/5`
     }
     let kpiSummary = 'No KPI data for this week'
+    let productivitySummary = ''
     if (kpiTemplates && kpiTemplates.length > 0 && kpiRecords && kpiRecords.length > 0) {
       kpiSummary = kpiTemplates.map(tmpl => {
         const recs = kpiRecords.filter(r => r.template_id === tmpl.id)
@@ -142,6 +144,16 @@ export default function WBRPage() {
         const target = tmpl.target ? ` (Target: ${tmpl.target}${tmpl.unit ? ' ' + tmpl.unit : ''})` : ''
         return `${tmpl.metric_name}: ${tot.toLocaleString()}${tmpl.unit ? ' ' + tmpl.unit : ''} | Avg: ${avg}${target}`
       }).join('\n')
+      const prodMetrics = kpiTemplates.filter(t => !t.metric_name.toLowerCase().includes('util'))
+      if (prodMetrics.length > 0) {
+        productivitySummary = prodMetrics.map(tmpl => {
+          const recs = kpiRecords.filter(r => r.template_id === tmpl.id)
+          if (recs.length === 0) return `${tmpl.metric_name}: No data`
+          const tot = recs.reduce((s, r) => s + r.value, 0)
+          const avg = (tot / recs.length).toFixed(1)
+          return `${tmpl.metric_name}: Total ${tot.toLocaleString()}${tmpl.unit ? ' ' + tmpl.unit : ''} (Avg ${avg}/day)`
+        }).join('\n')
+      }
     }
     let escalationsSummary = 'No open escalations'
     if (issues && issues.length > 0) {
@@ -157,19 +169,51 @@ export default function WBRPage() {
       attendance_summary: attSummary, attendance_breakdown: breakdown,
       health_summary: healthSummary, kpi_summary: kpiSummary,
       escalations_summary: escalationsSummary,
+      productivity_summary: productivitySummary || f.productivity_summary,
       deliverables: '', key_metrics: '', wins: '',
       challenges: '', action_items: '', next_week_focus: '',
     }))
     setShowForm(true); setPulling(false)
   }
 
+  const loadWBR = (wbr: any) => {
+    setForm({
+      client_id: wbr.client_id, week_start: wbr.week_start,
+      am_name: wbr.am_name || '', director_name: wbr.director_name || '', csm_name: wbr.csm_name || '',
+      total_tls: wbr.total_tls || '', total_agents: wbr.total_agents || '',
+      new_hires: wbr.new_hires || '', onboarding_dates: wbr.onboarding_dates || '', todo_list: wbr.todo_list || '',
+      recruitment_challenges: wbr.recruitment_challenges || '', recruitment_deliverables: wbr.recruitment_deliverables || '',
+      attendance_summary: wbr.attendance_summary || '', attendance_breakdown: wbr.attendance_breakdown || '',
+      attendance_flags: wbr.attendance_flags || '', schedule_amendments: wbr.schedule_amendments || '',
+      attrition_summary: wbr.attrition_summary || '',
+      productivity_summary: wbr.productivity_summary || '', productivity_trends: wbr.productivity_trends || '', productivity_wins_losses: wbr.productivity_wins_losses || '',
+      utilization_summary: wbr.utilization_summary || '', utilization_gaps: wbr.utilization_gaps || '', utilization_wins_losses: wbr.utilization_wins_losses || '',
+      tl_highlights: wbr.tl_highlights || '', team_highlights: wbr.team_highlights || '', agent_highlights: wbr.agent_highlights || '',
+      flags_risks: wbr.flags_risks || '', engagement_summary: wbr.engagement_summary || '', client_meeting_engagement: wbr.client_meeting_engagement || '',
+      health_summary: '', kpi_summary: '', escalations_summary: '',
+      deliverables: '', key_metrics: '', wins: '', challenges: '', action_items: '', next_week_focus: '',
+    })
+    setEditingId(wbr.id)
+    setShowForm(true)
+    setError('')
+  }
+
   const handleSave = async () => {
     if (!form.client_id) { setError('Please pull data first'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from('wbr').insert({ ...form, user_id: user!.id, archived: false }).select().single()
-    if (error) { setError(error.message); setSaving(false) }
-    else { setWbrs(w => [data, ...w]); setShowForm(false); setSaving(false); setError('') }
+    if (editingId) {
+      const { error } = await supabase.from('wbr').update(form).eq('id', editingId)
+      if (error) { setError(error.message); setSaving(false) }
+      else {
+        setWbrs(w => w.map(r => r.id === editingId ? { ...r, ...form } : r))
+        setShowForm(false); setEditingId(null); setSaving(false); setError('')
+      }
+    } else {
+      const { data, error } = await supabase.from('wbr').insert({ ...form, user_id: user!.id, archived: false }).select().single()
+      if (error) { setError(error.message); setSaving(false) }
+      else { setWbrs(w => [data, ...w]); setShowForm(false); setSaving(false); setError('') }
+    }
   }
 
   const archiveWBR = async (id: string) => {
@@ -479,13 +523,13 @@ export default function WBRPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {getClientName(form.client_id)} — Week of {form.week_start ? new Date(form.week_start).toLocaleDateString() : '—'}
+                    {editingId ? 'Edit' : 'New'} WBR — {getClientName(form.client_id)} — Week of {form.week_start ? new Date(form.week_start).toLocaleDateString() : '—'}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>All fields are editable — review before saving</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => { setShowForm(false); setError('') }}>Cancel</button>
-                  <button className="primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save WBR'}</button>
+                  <button onClick={() => { setShowForm(false); setEditingId(null); setError('') }}>Cancel</button>
+                  <button className="primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : editingId ? 'Update WBR' : 'Save WBR'}</button>
                 </div>
               </div>
               {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 16 }}>{error}</p>}
@@ -601,6 +645,11 @@ export default function WBRPage() {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Week of {wbr.week_start ? new Date(wbr.week_start).toLocaleDateString() : '—'}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        onClick={() => loadWBR(wbr)}
+                        style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, background: 'var(--bg-app)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                        Edit
+                      </button>
                       <button
                         onClick={() => { setSelectedWBR(wbr); setActiveTab('export') }}
                         style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, background: 'var(--accent-light)', color: 'var(--accent-text)', borderColor: 'var(--accent)' }}>

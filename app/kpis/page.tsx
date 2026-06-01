@@ -11,6 +11,7 @@ export default function KPIsPage() {
   const [employees, setEmployees] = useState<any[]>([])
   const [templates, setTemplates] = useState<any[]>([])
   const [records, setRecords] = useState<any[]>([])
+  const [attendanceData, setAttendanceData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('team')
   const [selectedClient, setSelectedClient] = useState('')
@@ -28,16 +29,18 @@ export default function KPIsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUser(user)
-      const [{ data: cl }, { data: em }, { data: tp }, { data: rc }] = await Promise.all([
+      const [{ data: cl }, { data: em }, { data: tp }, { data: rc }, { data: at }] = await Promise.all([
         supabase.from('clients').select('id, name').eq('user_id', user.id),
         supabase.from('employees').select('*').eq('user_id', user.id),
         supabase.from('kpi_templates').select('*').eq('user_id', user.id),
         supabase.from('kpi_records').select('*').eq('user_id', user.id),
+        supabase.from('attendance').select('*').eq('user_id', user.id),
       ])
       setClients(cl || [])
       setEmployees(em || [])
       setTemplates(tp || [])
       setRecords(rc || [])
+      setAttendanceData(at || [])
       if (cl && cl.length > 0) setSelectedClient(cl[0].id)
       setLoading(false)
     }
@@ -132,6 +135,7 @@ export default function KPIsPage() {
           {[
             { id: 'team', label: 'Team Performance' },
             { id: 'individual', label: 'Individual Performance' },
+            { id: 'utilization', label: 'Utilization' },
             { id: 'metrics', label: 'Manage Metrics' },
             { id: 'log', label: 'Log Performance' },
           ].map(tab => (
@@ -263,6 +267,123 @@ export default function KPIsPage() {
                   </div>
                 </div>
               ))}
+            </>
+          )}
+
+          {/* UTILIZATION TAB */}
+          {activeTab === 'utilization' && (
+            <>
+              {!selectedClient ? (
+                <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)', fontSize: 13 }}>Select a client to view utilization</div>
+              ) : (
+                <>
+                  {(() => {
+                    const clientEmps = employees.filter(e => e.client_id === selectedClient)
+                    const tls = clientEmps.filter(e => e.role?.toLowerCase().includes('lead') || e.role?.toLowerCase().includes('tl'))
+                    const agents = clientEmps.filter(e => !(e.role?.toLowerCase().includes('lead') || e.role?.toLowerCase().includes('tl')))
+
+                    const getUtil = (empId: string) => {
+                      const recs = attendanceData.filter(a => a.employee_id === empId && a.date?.startsWith(selectedMonth))
+                      if (recs.length === 0) return null
+                      const present = recs.filter(a => a.status === 'Present').length
+                      return { rate: Math.round((present / recs.length) * 100), present, total: recs.length }
+                    }
+
+                    const calcAvg = (emps: any[]) => {
+                      const utils = emps.map(e => getUtil(e.id)).filter(Boolean) as { rate: number; present: number; total: number }[]
+                      if (utils.length === 0) return null
+                      const avgRate = Math.round(utils.reduce((s, u) => s + u.rate, 0) / utils.length)
+                      const totalPresent = utils.reduce((s, u) => s + u.present, 0)
+                      const totalDays = utils.reduce((s, u) => s + u.total, 0)
+                      return { avgRate, totalPresent, totalDays, count: utils.length }
+                    }
+
+                    const teamAvg = calcAvg(clientEmps)
+                    const tlAvg = calcAvg(tls)
+                    const agentAvg = calcAvg(agents)
+
+                    const renderUtilRow = (emp: any) => {
+                      const u = getUtil(emp.id)
+                      const pct = u ? u.rate : null
+                      const pctColor = pct === null ? 'var(--text-muted)' : pct >= 90 ? 'var(--accent)' : pct >= 75 ? '#D4930A' : 'var(--danger)'
+                      return (
+                        <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--border-light)' }}>
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: 'var(--accent-text)' }}>
+                              {emp.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.role || 'Agent'}</div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', width: 80 }}>
+                            {pct !== null ? (
+                              <>
+                                <div style={{ fontSize: 18, fontWeight: 600, color: pctColor }}>{pct}%</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{u?.present || '?'}/{u?.total || '?'} days</div>
+                              </>
+                            ) : (
+                              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No data</div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <>
+                        {/* Summary cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                          {[
+                            { label: 'Team Average', value: teamAvg, color: 'var(--accent)' },
+                            { label: 'TL Average', value: tlAvg, color: '#D4930A' },
+                            { label: 'Agent Average', value: agentAvg, color: '#4A3080' },
+                          ].map(s => (
+                            <div key={s.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{s.label}</div>
+                              {s.value ? (
+                                <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value.avgRate}%</div>
+                              ) : (
+                                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>—</div>
+                              )}
+                              {s.value && (
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                                  {s.value.totalPresent}/{s.value.totalDays} days · {s.value.count} {s.label.toLowerCase().includes('team') ? 'employees' : 'people'}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* TLs */}
+                        {tls.length > 0 && (
+                          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+                            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-light)', fontSize: 13, fontWeight: 500, color: '#D4930A' }}>
+                              Team Leads ({tls.length})
+                            </div>
+                            {tls.map(renderUtilRow)}
+                          </div>
+                        )}
+
+                        {/* Agents */}
+                        {agents.length > 0 && (
+                          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, overflow: 'hidden' }}>
+                            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-light)', fontSize: 13, fontWeight: 500, color: '#4A3080' }}>
+                              Agents ({agents.length})
+                            </div>
+                            {agents.map(renderUtilRow)}
+                          </div>
+                        )}
+
+                        {clientEmps.length === 0 && (
+                          <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)', fontSize: 13 }}>No employees for this client</div>
+                        )}
+                      </>
+                    )
+                  })()}
+                </>
+              )}
             </>
           )}
 
