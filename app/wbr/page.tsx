@@ -380,18 +380,18 @@ export default function WBRPage() {
     })
 
     // Flags & Risks
-    p3.addShape(pptx.ShapeType.rect, { x: 0.4, y: 3.6, w: 0.05, h: 0.22, fill: { color: RED } })
-    p3.addText('FLAGS & RISKS', { x: 0.55, y: 3.6, w: 5, h: 0.22, fontSize: 8, bold: true, color: RED, charSpacing: 1 })
-    card(p3, 0.4, 3.88, 12.7, 0.96)
-    bulletBlock(p3, wbr.flags_risks, 0.58, 3.96, 12.3, 0.78)
+    p3.addShape(pptx.ShapeType.rect, { x: 0.4, y: 3.85, w: 0.05, h: 0.22, fill: { color: RED } })
+    p3.addText('FLAGS & RISKS', { x: 0.55, y: 3.85, w: 5, h: 0.22, fontSize: 8, bold: true, color: RED, charSpacing: 1 })
+    card(p3, 0.4, 4.13, 12.7, 0.96)
+    bulletBlock(p3, wbr.flags_risks, 0.58, 4.21, 12.3, 0.78)
 
     // Engagement
-    p3.addShape(pptx.ShapeType.rect, { x: 0.4, y: 4.96, w: 0.05, h: 0.22, fill: { color: TEAL } })
-    p3.addText('ENGAGEMENT', { x: 0.55, y: 4.96, w: 5, h: 0.22, fontSize: 8, bold: true, color: TEAL, charSpacing: 1 })
-    label(p3, 'TL / Agent Engagement Level', 0.4, 5.24, 6.2)
-    val(p3, wbr.engagement_summary, 0.4, 5.48, 6.2, 0.66, { fontSize: 10 })
-    label(p3, 'Client Meeting Engagement', 6.8, 5.24, 6.3)
-    val(p3, wbr.client_meeting_engagement, 6.8, 5.48, 6.3, 0.66, { fontSize: 10 })
+    p3.addShape(pptx.ShapeType.rect, { x: 0.4, y: 5.35, w: 0.05, h: 0.22, fill: { color: TEAL } })
+    p3.addText('ENGAGEMENT', { x: 0.55, y: 5.35, w: 5, h: 0.22, fontSize: 8, bold: true, color: TEAL, charSpacing: 1 })
+    label(p3, 'TL / Agent Engagement Level', 0.4, 5.63, 6.2)
+    val(p3, wbr.engagement_summary, 0.4, 5.87, 6.2, 0.5, { fontSize: 10 })
+    label(p3, 'Client Meeting Engagement', 6.8, 5.63, 6.3)
+    val(p3, wbr.client_meeting_engagement, 6.8, 5.87, 6.3, 0.5, { fontSize: 10 })
 
     addFooter(p3)
 
