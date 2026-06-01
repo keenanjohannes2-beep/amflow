@@ -8,6 +8,7 @@ const nav = [
   { label: 'Clients', icon: '◉', href: '/clients' },
   { label: 'Weekly Reviews', icon: '▤', href: '/wbr' },
   { label: 'Recruitment', icon: '⊕', href: '/recruitment' },
+  { label: 'POC', icon: '◉', href: '/poc' },
   { label: 'Tasks', icon: '✓', href: '/tasks' },
   { label: 'Communications', icon: '◈', href: '/communications' },
   { label: 'Escalations', icon: '⚠', href: '/issues' },

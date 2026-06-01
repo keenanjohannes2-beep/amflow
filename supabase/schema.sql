@@ -213,6 +213,21 @@ CREATE TABLE IF NOT EXISTS public.recruitment (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.poc (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  director_name TEXT,
+  director_email TEXT,
+  director_phone TEXT,
+  csm_name TEXT,
+  csm_email TEXT,
+  csm_phone TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- ENABLE ROW LEVEL SECURITY ON ALL TABLES
 -- ============================================
@@ -230,6 +245,7 @@ ALTER TABLE public.kpi_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scorecards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wbr ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recruitment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.poc ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- CLIENTS POLICIES
@@ -505,6 +521,27 @@ CREATE POLICY "Users can delete own recruitment"
   ON public.recruitment FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================
+-- POC POLICIES
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view own poc" ON public.poc;
+DROP POLICY IF EXISTS "Users can insert own poc" ON public.poc;
+DROP POLICY IF EXISTS "Users can update own poc" ON public.poc;
+DROP POLICY IF EXISTS "Users can delete own poc" ON public.poc;
+
+CREATE POLICY "Users can view own poc"
+  ON public.poc FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own poc"
+  ON public.poc FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own poc"
+  ON public.poc FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own poc"
+  ON public.poc FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -535,12 +572,16 @@ CREATE INDEX IF NOT EXISTS idx_scorecards_user_id ON public.scorecards(user_id);
 CREATE INDEX IF NOT EXISTS idx_scorecards_client_id ON public.scorecards(client_id);
 CREATE INDEX IF NOT EXISTS idx_wbr_user_id ON public.wbr(user_id);
 CREATE INDEX IF NOT EXISTS idx_wbr_client_id ON public.wbr(client_id);
+CREATE INDEX IF NOT EXISTS idx_recruitment_user_id ON public.recruitment(user_id);
+CREATE INDEX IF NOT EXISTS idx_recruitment_client_id ON public.recruitment(client_id);
+CREATE INDEX IF NOT EXISTS idx_poc_user_id ON public.poc(user_id);
+CREATE INDEX IF NOT EXISTS idx_poc_client_id ON public.poc(client_id);
 
 -- ============================================
 -- SECURITY SUMMARY
 -- ============================================
 --
--- All 12 tables have RLS enabled
+-- All 13 tables have RLS enabled
 -- Every operation (SELECT, INSERT, UPDATE, DELETE) requires:
 --   auth.uid() = user_id
 --
