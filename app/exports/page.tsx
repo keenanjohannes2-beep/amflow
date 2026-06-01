@@ -361,13 +361,21 @@ export default function ExportsPage() {
       })
     }
 
-    // Slide 5 — WBR
+    // Slide 5 — WBR Summary (reads new fields, falls back to legacy for old records)
     if (wbr && wbr.length > 0) {
       const w = wbr[0]
       const wbrSlide = pptx.addSlide()
       addHeader(wbrSlide, 'Latest Weekly Business Review')
       wbrSlide.addText(`Week of ${w.week_start ? new Date(w.week_start).toLocaleDateString() : '—'}`, { x: 0.4, y: 1.3, w: 8, h: 0.3, fontSize: 11, color: MUTED })
-      const sections = [
+      // Use new structured fields if present, fall back to legacy fields for old records
+      const sections = w.productivity_summary || w.tl_highlights ? [
+        { label: 'Account Manager', value: w.am_name },
+        { label: 'Attendance', value: w.attendance_summary },
+        { label: 'Productivity', value: w.productivity_summary?.split('\n').slice(0,3).join(' · ') },
+        { label: 'Utilization', value: w.utilization_summary?.split('\n').slice(0,2).join(' · ') },
+        { label: 'Highlights', value: [w.tl_highlights, w.team_highlights].filter(Boolean).join(' | ')?.slice(0,120) },
+        { label: 'Flags / Risks', value: w.flags_risks },
+      ].filter(s => s.value) : [
         { label: 'Deliverables', value: w.deliverables },
         { label: 'Key Metrics', value: w.key_metrics },
         { label: 'Wins', value: w.wins },
